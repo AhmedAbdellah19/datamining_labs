@@ -5,6 +5,8 @@ import cv2, random
 from sklearn.feature_extraction import image
 from sklearn.cluster import SpectralClustering
 
+from skimage.transform import resize
+
 def normalizedCutSegmentation(img, cl, aff, nn, g):
 	X = img.reshape((-1, 3))
 	labels = SpectralClustering(n_clusters=cl, affinity=aff, n_neighbors=nn, gamma=g).fit_predict(X)
@@ -22,20 +24,19 @@ def normalizedCutSegmentation(img, cl, aff, nn, g):
 	return segImg
 
 if __name__ == '__main__':
-	path = '124084.jpg'
-	n, m = 60, 60
-	clusters = 20
-	affinity = 'nearest_neighbors'
-	knn = 5
-	gamma = 1.0
+	path = '124084'
+	n, m = 100, 100
 
-	img = cv2.imread(path)
-	img = cv2.resize(img, (n, m))
-
-	segImg = normalizedCutSegmentation(img, clusters, affinity, knn, gamma)
+	img = cv2.imread(path + '.jpg')
+	img = resize(img, (n, m), anti_aliasing=True)
 
 	cv2.imshow('Original', img)
 	cv2.waitKey(0)
-	cv2.imshow('Segmented', segImg)
-	cv2.waitKey(0)
 	cv2.destroyAllWindows()
+
+	for clusters in [3, 5, 7, 9, 11]:
+		segImg = normalizedCutSegmentation(img, clusters, 'nearest_neighbors', 5, 1.0)
+		cv2.imshow('Segmented', segImg)
+		cv2.waitKey(0)
+		cv2.destroyAllWindows()
+		np.save('ncut_nn/' + path + '_' + str(clusters), segImg)
