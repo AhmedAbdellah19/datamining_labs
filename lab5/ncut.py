@@ -7,6 +7,9 @@ from sklearn.feature_extraction import image
 from sklearn.cluster import SpectralClustering
 
 from skimage.transform import resize
+from skimage import img_as_uint
+
+import eval
 
 def normalizedCutSegmentation(img, cl, aff, nn, g):
 	X = img.reshape((-1, 3))
@@ -24,8 +27,7 @@ def normalizedCutSegmentation(img, cl, aff, nn, g):
 		for j in range(img.shape[1]):
 			segImg[i][j] = colors[labels[i * img.shape[1] + j]]
 
-
-	return segImg
+	return segImg, labels
 
 if __name__ == '__main__':
 	path = '124084'
@@ -34,13 +36,25 @@ if __name__ == '__main__':
 	img = cv2.imread(path + '.jpg')
 	img = resize(img, (n, m), anti_aliasing=True)
 
+	'''
 	cv2.imshow('Original', img)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
+	'''
+
+	gt = eval.get_ground_truth_labels(path)
+	gt_labels = img_as_uint(resize(gt, (n, m), anti_aliasing=False))
+	gt_labels = gt_labels.flatten()
 
 	for clusters in [3, 5, 7, 9, 11]:
-		segImg = normalizedCutSegmentation(img, clusters, 'nearest_neighbors', 5, 1.0)
+		segImg, labels = normalizedCutSegmentation(img, clusters, 'rbf', 5, 1.0)
+
+		'''
 		cv2.imshow('Segmented', segImg)
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 		np.save('ncut_nn/' + path + '_' + str(clusters), segImg)
+		'''
+
+		print('F-measure = ', eval.f_measure(gt_labels, labels, clusters))
+		print('Conditional Entropy = ', eval.conditional_entropy(gt_labels, labels, clusters))
