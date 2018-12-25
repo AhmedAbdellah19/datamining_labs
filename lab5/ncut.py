@@ -8,6 +8,27 @@ from sklearn.cluster import SpectralClustering
 
 from skimage.transform import resize
 
+
+def show_image_and_segImages(img, segImgs):
+    y = 3
+    f, axes = plt.subplots(2, y, figsize=(5, 5))
+    r, c = 0, 1
+    axes[0, 0].imshow(img, aspect='auto')
+    axes[0, 0].axis('off')
+    print(len(segImgs))
+    for i in range(len(segImgs)):
+        print(r,c)
+        axes[r, c].imshow(segImgs[i])
+        axes[r, c].axis('off', aspect='auto')
+        c += 1
+        if c == y:
+            c = 0
+            r += 1
+    plt.subplots_adjust(wspace=0.01, hspace=0.01)
+    plt.show()
+
+
+
 def normalizedCutSegmentation(img, cl, aff, nn, g):
 	X = img.reshape((-1, 3))
 
@@ -28,19 +49,21 @@ def normalizedCutSegmentation(img, cl, aff, nn, g):
 	return segImg
 
 if __name__ == '__main__':
-	path = '124084'
-	n, m = 100, 100
+	path = '8068'
+	n, m = 75, 75
 
 	img = cv2.imread(path + '.jpg')
 	img = resize(img, (n, m), anti_aliasing=True)
 
-	cv2.imshow('Original', img)
-	cv2.waitKey(0)
+	# cv2.imshow('Original', img)
+	# cv2.waitKey(0)
 	cv2.destroyAllWindows()
+	segImgs = []
 
 	for clusters in [3, 5, 7, 9, 11]:
+		print(clusters)
 		segImg = normalizedCutSegmentation(img, clusters, 'nearest_neighbors', 5, 1.0)
-		cv2.imshow('Segmented', segImg)
-		cv2.waitKey(0)
-		cv2.destroyAllWindows()
 		np.save('ncut_nn/' + path + '_' + str(clusters), segImg)
+		segImgs.append(segImg)
+
+	show_image_and_segImages(img, segImgs)
